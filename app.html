@@ -315,23 +315,23 @@
             css += `[data-tab="4"] { display: none !important; }\n`;
             
             // Always hide profile pictures
-                css += `
-                [data-testid="cell-frame-container"] img,
-                [data-testid="avatar"] img,
-                ._8nE1Y img { display: none !important; }
-                
-                [data-testid="avatar"],
-                ._8nE1Y {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                    border-radius: 50% !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    color: white !important;
-                    font-weight: bold !important;
-                    font-size: 14px !important;
-                }
-                `;
+            css += `
+[data-testid="cell-frame-container"] img,
+[data-testid="avatar"] img,
+._8nE1Y img { display: none !important; }
+
+[data-testid="avatar"],
+._8nE1Y {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+}
+`;
             }
             
             if (config.focusMode && config.hideTyping) {
