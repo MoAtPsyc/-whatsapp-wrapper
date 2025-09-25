@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WhatsApp Wrapper</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body, html { 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f0f0;
+        }
+        
+        .launcher {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: 300;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .launch-btn {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+        
+        .launch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+        
+        .config-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+        
+        .config-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .config-section label {
+            display: block;
+            margin: 12px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .config-section input, .config-section select {
+            margin-right: 10px;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .instructions h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            color: #856404;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .custom-css {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid #e9ecef;
+        }
+        
+        .custom-css textarea {
+            width: 100%;
+            height: 100px;
+            border: none;
+            background: transparent;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .copy-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="launcher">
+        <div class="logo">📱</div>
+        <h1>WhatsApp Wrapper</h1>
+        <p class="subtitle">Distraction-free WhatsApp Web experience</p>
+        
+        <a href="https://web.whatsapp.com/" target="_blank" class="launch-btn" id="launchBtn">
+            Open WhatsApp Web
+        </a>
+        
+        <div class="config-section">
+            <h3>Customization Settings</h3>
+            <label><input type="checkbox" id="hideStatus" checked> Hide Status Tab</label>
+            <label><input type="checkbox" id="hideCommunities" checked> Hide Communities Tab</label>
+            <label><input type="checkbox" id="hideProfilePics" checked> Hide Profile Pictures</label>
+            <label><input type="checkbox" id="hideTyping" checked> Hide Typing Indicators</label>
+            <label><input type="checkbox" id="hideReadReceipts"> Hide Read Receipts</label>
+            <label><input type="checkbox" id="hideTimestamps"> Hide Timestamps</label>
+            <label>
+                Replace Profile Pics:
+                <select id="replacementType">
+                    <option value="initials">Initials</option>
+                    <option value="abstract">Abstract Icon</option>
+                    <option value="empty">Empty</option>
+                </select>
+            </label>
+        </div>
+        
+        <div class="custom-css">
+            <h4>Generated CSS for Browser Extension:</h4>
+            <textarea id="generatedCSS" readonly></textarea>
+            <button class="copy-btn" onclick="copyCSS()">Copy CSS</button>
+        </div>
+        
+        <div class="instructions">
+            <h4>How to Use:</h4>
+            <p>1. Install a browser extension like "Stylish" or "User CSS"<br>
+            2. Copy the generated CSS above<br>
+            3. Create a new style for web.whatsapp.com<br>
+            4. Paste the CSS and save<br>
+            5. Open WhatsApp Web to see your customizations!</p>
+        </div>
+    </div>
+    
+    <script>
+        function generateCSS() {
+            const hideStatus = document.getElementById('hideStatus').checked;
+            const hideCommunities = document.getElementById('hideCommunities').checked;
+            const hideProfilePics = document.getElementById('hideProfilePics').checked;
+            const hideTyping = document.getElementById('hideTyping').checked;
+            const hideReadReceipts = document.getElementById('hideReadReceipts').checked;
+            const hideTimestamps = document.getElementById('hideTimestamps').checked;
+            const replacementType = document.getElementById('replacementType').value;
+            
+            let css = `/* WhatsApp Wrapper - Distraction-Free Customizations */\n\n`;
+            
+            if (hideStatus) {
+                css += `/* Hide Status tab */\n[data-tab="3"] { display: none !important; }\n\n`;
+            }
+            
+            if (hideCommunities) {
+                css += `/* Hide Communities tab */\n[data-tab="4"] { display: none !important; }\n\n`;
+            }
+            
+            if (hideProfilePics) {
+                css += `/* Hide profile pictures */\n`;
+                css += `[data-testid="cell-frame-container"] img,\n`;
+                css += `[data-testid="avatar"] img,\n`;
+                css += `._8nE1Y img { display: none !important; }\n\n`;
+                
+                css += `/* Style avatar containers */\n`;
+                css += `[data-testid="avatar"],\n`;
+                css += `._8nE1Y {\n`;
+                css += `    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;\n`;
+                css += `    border-radius: 50% !important;\n`;
+                css += `    display: flex !important;\n`;
+                css += `    align-items: center !important;\n`;
+                css += `    justify-content: center !important;\n`;
+                css += `    color: white !important;\n`;
+                css += `    font-weight: bold !important;\n`;
+                css += `    font-size: 14px !important;\n`;
+                css += `}\n\n`;
+                
+                if (replacementType === 'abstract') {
+                    css += `/* Add abstract icon */\n`;
+                    css += `[data-testid="avatar"]::after,\n`;
+                    css += `._8nE1Y::after {\n`;
+                    css += `    content: "◉" !important;\n`;
+                    css += `    font-size: 20px !important;\n`;
+                    css += `}\n\n`;
+                }
+            }
+            
+            if (hideTyping) {
+                css += `/* Hide typing indicators */\n`;
+                css += `[data-testid="typing-indicator"],\n`;
+                css += `._2lSWV { display: none !important; }\n\n`;
+            }
+            
+            if (hideReadReceipts) {
+                css += `/* Hide read receipts */\n`;
+                css += `[data-testid="msg-dblcheck"],\n`;
+                css += `[data-testid="msg-check"],\n`;
+                css += `._1i3Za { display: none !important; }\n\n`;
+            }
+            
+            if (hideTimestamps) {
+                css += `/* Hide timestamps */\n`;
+                css += `[data-testid="msg-meta"],\n`;
+                css += `._3DFk6 { display: none !important; }\n\n`;
+            }
+            
+            // Add focus improvements
+            css += `/* Clean focus improvements */\n`;
+            css += `/* Remove notification badges */\n`;
+            css += `.VOr2j, ._38M1B { display: none !important; }\n\n`;
+            
+            css += `/* Cleaner chat list */\n`;
+            css += `._210SC { border-bottom: 1px solid #f0f0f0 !important; }\n\n`;
+            
+            return css;
+        }
+        
+        function copyCSS() {
+            const textarea = document.getElementById('generatedCSS');
+            textarea.select();
+            document.execCommand('copy');
+            
+            const btn = document.querySelector('.copy-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+        
+        // Update CSS when settings change
+        document.querySelectorAll('input, select').forEach(input => {
+            input.addEventListener('change', () => {
+                document.getElementById('generatedCSS').value = generateCSS();
+            });
+        });
+        
+        // Initialize
+        document.getElementById('generatedCSS').value = generateCSS();
+    </script>
+</body>
+</html>

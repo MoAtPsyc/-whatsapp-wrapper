@@ -1,0 +1,16 @@
+{
+  "showProfilePics": false,
+  "showTimestamps": true,
+  "showReadReceipts": false,
+  "enableNotifications": true,
+  "focusMode": true,
+  "replacementType": "initials",
+  "_comments": {
+    "showProfilePics": "Set to true to show original profile pictures",
+    "showTimestamps": "Set to false to hide message timestamps",
+    "showReadReceipts": "Set to true to show read receipts (blue checkmarks)",
+    "enableNotifications": "Set to false to disable all notifications",
+    "focusMode": "Set to false to disable focus mode by default",
+    "replacementType": "Options: 'initials', 'abstract', 'empty'"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "whatsapp-wrapper",
+  "version": "1.0.0",
+  "description": "A distraction-free wrapper for WhatsApp Web",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "dev": "electron . --dev"
+  },
+  "keywords": ["whatsapp", "electron", "wrapper", "productivity"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^24.6.0"
+  },
+  "build": {
+    "appId": "com.whatsapp.wrapper",
+    "productName": "WhatsApp Wrapper",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "assets/**/*",
+      "config.json"
+    ]
+  }
+}

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WhatsApp Wrapper</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body, html { 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .app-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #f0f0f0;
+        }
+        
+        .webview-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        #whatsapp-webview {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+        
+        .overlay-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(37, 211, 102, 0.9);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            background: rgba(37, 211, 102, 1);
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 150px;
+            right: 20px;
+            width: 250px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10000;
+            display: none;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .settings-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .settings-panel label {
+            display: block;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+        }
+        
+        .settings-panel input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        
+        .settings-panel select {
+            margin-left: 10px;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .apply-btn {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-top: 15px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 18px;
+        }
+        
+        @media (max-width: 768px) {
+            .overlay-controls {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .control-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 16px;
+            }
+            
+            .settings-panel {
+                top: 120px;
+                right: 10px;
+                width: calc(100vw - 40px);
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="webview-container">
+            <div class="loading" id="loading">Loading WhatsApp Web...</div>
+            <iframe id="whatsapp-webview" src="about:blank"></iframe>
+        </div>
+        
+        <div class="overlay-controls">
+            <button class="control-btn" id="focusToggle" title="Toggle Focus Mode">🎯</button>
+            <button class="control-btn" id="settingsToggle" title="Settings">⚙️</button>
+            <button class="control-btn" id="refreshBtn" title="Refresh">🔄</button>
+        </div>
+        
+        <div class="settings-panel" id="settingsPanel">
+            <h3>Settings</h3>
+            <div style="color: #888; font-size: 12px; margin-bottom: 15px;">
+                Status, Communities & Profile Pictures are always hidden
+            </div>
+            <label><input type="checkbox" id="hideTyping" checked> Hide Typing Indicators</label>
+            <label><input type="checkbox" id="hideReadReceipts"> Hide Read Receipts</label>
+            <label><input type="checkbox" id="hideTimestamps"> Hide Message Times</label>
+            <label><input type="checkbox" id="hideNotifications" checked> Hide Notification Badges</label>
+            <label>
+                Profile Replacement:
+                <select id="replacementType">
+                    <option value="initials">Initials</option>
+                    <option value="abstract">Icon</option>
+                    <option value="empty">Empty</option>
+                </select>
+            </label>
+            <button class="apply-btn" id="applySettings">Apply Changes</button>
+        </div>
+    </div>
+    
+    <script>
+        // App configuration - Status, Communities, and Profile Pics always hidden
+        let config = {
+            hideStatus: true,        // Always hidden
+            hideCommunities: true,   // Always hidden  
+            hideProfilePics: true,   // Always hidden
+            hideTyping: true,
+            hideReadReceipts: false,
+            hideTimestamps: false,
+            hideNotifications: true,
+            replacementType: 'initials',
+            focusMode: true
+        };
+        
+        // Load saved settings
+        const savedConfig = localStorage.getItem('whatsapp-wrapper-config');
+        if (savedConfig) {
+            config = { ...config, ...JSON.parse(savedConfig) };
+        }
+        
+        const iframe = document.getElementById('whatsapp-webview');
+        const loading = document.getElementById('loading');
+        
+        // Initialize app
+        function initApp() {
+            updateSettingsUI();
+            loadWhatsApp();
+            setupEventListeners();
+        }
+        
+        function loadWhatsApp() {
+            iframe.src = 'https://web.whatsapp.com/';
+            
+            iframe.onload = function() {
+                loading.style.display = 'none';
+                setTimeout(() => {
+                    applyCustomizations();
+                }, 2000);
+            };
+        }
+        
+        function setupEventListeners() {
+            // Focus mode toggle
+            document.getElementById('focusToggle').addEventListener('click', function() {
+                config.focusMode = !config.focusMode;
+                this.innerHTML = config.focusMode ? '🎯' : '👁️';
+                this.style.background = config.focusMode ? 'rgba(37, 211, 102, 0.9)' : 'rgba(128, 128, 128, 0.9)';
+                applyCustomizations();
+                saveConfig();
+            });
+            
+            // Settings toggle
+            document.getElementById('settingsToggle').addEventListener('click', function() {
+                const panel = document.getElementById('settingsPanel');
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                loading.style.display = 'block';
+                iframe.src = iframe.src;
+            });
+            
+            // Apply settings
+            document.getElementById('applySettings').addEventListener('click', function() {
+                updateConfigFromUI();
+                applyCustomizations();
+                saveConfig();
+                document.getElementById('settingsPanel').style.display = 'none';
+            });
+            
+            // Close settings when clicking outside
+            document.addEventListener('click', function(e) {
+                const panel = document.getElementById('settingsPanel');
+                const settingsBtn = document.getElementById('settingsToggle');
+                if (!panel.contains(e.target) && !settingsBtn.contains(e.target)) {
+                    panel.style.display = 'none';
+                }
+            });
+        }
+        
+        function updateSettingsUI() {
+            // Status, Communities, and Profile Pics are always hidden - no UI controls
+            document.getElementById('hideTyping').checked = config.hideTyping;
+            document.getElementById('hideReadReceipts').checked = config.hideReadReceipts;
+            document.getElementById('hideTimestamps').checked = config.hideTimestamps;
+            document.getElementById('hideNotifications').checked = config.hideNotifications;
+            document.getElementById('replacementType').value = config.replacementType;
+            
+            const focusBtn = document.getElementById('focusToggle');
+            focusBtn.innerHTML = config.focusMode ? '🎯' : '👁️';
+            focusBtn.style.background = config.focusMode ? 'rgba(37, 211, 102, 0.9)' : 'rgba(128, 128, 128, 0.9)';
+        }
+        
+        function updateConfigFromUI() {
+            // Status, Communities, and Profile Pics are always hidden
+            config.hideStatus = true;
+            config.hideCommunities = true;
+            config.hideProfilePics = true;
+            
+            // Only allow customization of these settings
+            config.hideTyping = document.getElementById('hideTyping').checked;
+            config.hideReadReceipts = document.getElementById('hideReadReceipts').checked;
+            config.hideTimestamps = document.getElementById('hideTimestamps').checked;
+            config.hideNotifications = document.getElementById('hideNotifications').checked;
+            config.replacementType = document.getElementById('replacementType').value;
+        }
+        
+        function applyCustomizations() {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Remove existing styles
+                const existingStyle = iframeDoc.getElementById('wrapper-custom-styles');
+                if (existingStyle) existingStyle.remove();
+                
+                // Create and inject CSS
+                const style = iframeDoc.createElement('style');
+                style.id = 'wrapper-custom-styles';
+                style.textContent = generateCSS();
+                iframeDoc.head.appendChild(style);
+                
+                // Inject JavaScript for dynamic content
+                injectJavaScript(iframeDoc);
+                
+            } catch (error) {
+                console.log('Cross-origin restrictions prevent customization. This will work in the mobile app.');
+            }
+        }
+        
+        function generateCSS() {
+            let css = `/* WhatsApp Wrapper Customizations */\n`;
+            
+            // Always hide Status and Communities (not affected by focus mode)
+            css += `[data-tab="3"] { display: none !important; }\n`;
+            css += `[data-tab="4"] { display: none !important; }\n`;
+            
+            // Always hide profile pictures
+                css += `
+                [data-testid="cell-frame-container"] img,
+                [data-testid="avatar"] img,
+                ._8nE1Y img { display: none !important; }
+                
+                [data-testid="avatar"],
+                ._8nE1Y {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    border-radius: 50% !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    color: white !important;
+                    font-weight: bold !important;
+                    font-size: 14px !important;
+                }
+                `;
+            }
+            
+            if (config.focusMode && config.hideTyping) {
+                css += `[data-testid="typing-indicator"], ._2lSWV { display: none !important; }\n`;
+            }
+            
+            if (config.hideReadReceipts) {
+                css += `[data-testid="msg-dblcheck"], [data-testid="msg-check"], ._1i3Za { display: none !important; }\n`;
+            }
+            
+            if (config.hideTimestamps) {
+                css += `[data-testid="msg-meta"], ._3DFk6 { display: none !important; }\n`;
+            }
+            
+            if (config.hideNotifications) {
+                css += `.VOr2j, ._38M1B, [data-testid="unread-count"] { display: none !important; }\n`;
+            }
+            
+            return css;
+        }
+        
+        function injectJavaScript(doc) {
+            if (!config.hideProfilePics) return;
+            
+            const script = doc.createElement('script');
+            script.textContent = `
+                function replaceProfilePics() {
+                    const avatars = document.querySelectorAll('[data-testid="avatar"]:not(.processed)');
+                    avatars.forEach(avatar => {
+                        avatar.classList.add('processed');
+                        const img = avatar.querySelector('img');
+                        if (img) {
+                            const contactElement = avatar.closest('[data-testid="cell-frame-container"]');
+                            let initials = '?';
+                            if (contactElement) {
+                                const nameElement = contactElement.querySelector('[data-testid="cell-frame-title"]');
+                                if (nameElement) {
+                                    const name = nameElement.textContent.trim();
+                                    initials = name.split(' ').map(word => word[0]).join('').substring(0, 2).toUpperCase();
+                                }
+                            }
+                            
+                            if ('${config.replacementType}' === 'initials') {
+                                avatar.textContent = initials;
+                            } else if ('${config.replacementType}' === 'abstract') {
+                                avatar.innerHTML = '◉';
+                            }
+                        }
+                    });
+                }
+                setInterval(replaceProfilePics, 1000);
+                setTimeout(replaceProfilePics, 3000);
+            `;
+            doc.body.appendChild(script);
+        }
+        
+        function saveConfig() {
+            localStorage.setItem('whatsapp-wrapper-config', JSON.stringify(config));
+        }
+        
+        // Initialize the app
+        initApp();
+        
+        // Periodically reapply customizations
+        setInterval(() => {
+            if (iframe.src.includes('web.whatsapp.com')) {
+                applyCustomizations();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
